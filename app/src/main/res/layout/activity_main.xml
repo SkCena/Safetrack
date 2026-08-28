@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CyberSkOD Free - SafeTrack Setup"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/btnLocationPerm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Grant Location Permission" />
+
+    <Button
+        android:id="@+id/btnUsagePerm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Grant App Usage Permission" />
+
+    <Button
+        android:id="@+id/btnBatteryPerm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Disable Battery Restrictions" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Setup Pending"
+        android:layout_marginTop="24dp"
+        android:textSize="16sp" />
+
+</LinearLayout>
