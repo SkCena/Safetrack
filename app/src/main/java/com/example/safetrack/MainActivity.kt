@@ -1,7 +1,8 @@
 package com.example.safetrack
 
-import androidx.work.*
 import java.util.concurrent.TimeUnit
+
+import androidx.work.*
 
 import android.Manifest
 import android.content.Context
@@ -17,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.work.Constraints
 import androidx.work.NetworkType
-import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
