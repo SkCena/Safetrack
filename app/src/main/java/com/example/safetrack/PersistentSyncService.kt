@@ -3,7 +3,7 @@ package com.example.safetrack
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Service
+import androidx.lifecycle.LifecycleService
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -16,12 +16,13 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-class PersistentSyncService : Service() {
+class PersistentSyncService : LifecycleService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var lastUpdateId = -1L
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         startForeground(1, createNotification())
         startPolling()
         return START_STICKY

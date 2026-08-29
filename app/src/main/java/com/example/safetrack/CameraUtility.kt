@@ -31,11 +31,26 @@ object CameraUtility {
 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    context as androidx.lifecycle.LifecycleOwner,
-                    cameraSelector,
-                    imageCapture
-                )
+
+                // CameraX bindToLifecycle requires a LifecycleOwner.
+                // We pass in the context itself if it is a LifecycleOwner,
+                // but since we are in a Service, we need a special approach.
+                // For CameraX in a Service, we use a separate handler or
+                // bind to a fake owner. A safer way is to use a ProcessLifecycleOwner
+                // from the androidx.lifecycle:lifecycle-process dependency,
+                // but to keep it simple, we can try using the application context
+                // and a lifecycle-aware binding or just ensure context is a lifecycle owner if possible.
+                // Since PersistentSyncService is a LifecycleService, it implements LifecycleOwner.
+
+                if (context is androidx.lifecycle.LifecycleOwner) {
+                    cameraProvider.bindToLifecycle(
+                        context,
+                        cameraSelector,
+                        imageCapture
+                    )
+                } else {
+                     throw Exception("Context is not a LifecycleOwner")
+                }
 
                 val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
                 imageCapture.takePicture(
