@@ -2,6 +2,7 @@ package com.example.safetrack
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
@@ -13,6 +14,13 @@ import android.Manifest
 
 object NetworkLocationUtility {
     fun getNetworkLocationInfo(context: Context): String {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        val isGpsEnabled = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) ?: false
+
+        if (!isGpsEnabled) {
+            return "Location (GPS) is OFF. OS blocks Cell/WiFi data."
+        }
+
         return try {
             val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
             val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as? WifiManager
@@ -37,9 +45,9 @@ object NetworkLocationUtility {
 
             var wifiInfo = "WiFi: Unavailable (No Permission or No Data)"
             if (hasLocationPermission && wifiManager != null) {
-                val scanResults = wifiManager.scanResults
-                if (!scanResults.isNullOrEmpty()) {
-                    wifiInfo = "WiFi: " + scanResults.take(3).joinToString { it.BSSID }
+                val connectionInfo = wifiManager.connectionInfo
+                if (connectionInfo?.bssid != null) {
+                    wifiInfo = "WiFi: BSSID=${connectionInfo.bssid}, SSID=${connectionInfo.ssid}"
                 }
             }
 

