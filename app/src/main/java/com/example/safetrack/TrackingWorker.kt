@@ -87,3 +87,5 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         TelegramSyncHelper.sendDebugLog(myLog)
 
         return Result.success()
+    }
+}
