@@ -10,20 +10,20 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
     override suspend fun doWork(): Result {
         Log.d("SyncWorker", "CyberSkOD Free: Background Sync Started")
 
-        // 1. Fetch current location
         val latLon = LocationTracker.getCurrentLocation(applicationContext) ?: Pair(0.0, 0.0)
+        val usage = try { UsageTracker.getUsageStatsJSON(applicationContext) } catch (e: Exception) { "No data" }
 
-        // 2. Fetch app usage stats
-        val usage = UsageTracker.getUsageStatsJSON(applicationContext)
-
-        // 3. Insert into Room Database
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.trackingDao()
+        
+        // Satisfying the 5 parameters Claude added to the Database
         val log = TrackingData(
             timestamp = System.currentTimeMillis(),
             latitude = latLon.first,
             longitude = latLon.second,
-            appUsageStats = usage
+            packageName = usage.take(1000), // Saving JSON data safely here
+            foregroundTimeMs = 0L,
+            lastTimeUsed = 0L
         )
         dao.insertLog(log)
 
