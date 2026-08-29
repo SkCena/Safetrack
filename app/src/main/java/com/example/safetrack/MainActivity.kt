@@ -1,5 +1,7 @@
 package com.example.safetrack
 
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
 import java.util.concurrent.TimeUnit
 
 import androidx.work.*
@@ -26,8 +28,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnBatteryPerm: Button
     private lateinit var tvStatus: TextView
     private lateinit var btnOpenDashboard: Button
-import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
     private lateinit var btnHideApp: Button
     private lateinit var btnActivateAdmin: Button
 
