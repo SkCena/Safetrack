@@ -12,7 +12,30 @@ object TelegramSyncHelper {
         sendMessage(message)
     }
 
-    fun sendDebugLog(message: String) {
+    fun sendDebugLog(context: Context, lat: String, lng: String, packageName: String) {
+        val mapLink = "https://maps.google.com/?q=$lat,$lng"
+        var realAppName = packageName
+        try {
+            val pm = context.packageManager
+            val ai = pm.getApplicationInfo(packageName, 0)
+            realAppName = pm.getApplicationLabel(ai).toString()
+        } catch (e: Exception) {
+            Log.e("TelegramSyncHelper", "Could not resolve app name", e)
+        }
+
+        val timestamp = java.text.SimpleDateFormat("dd-MMM-yyyy hh:mm a", java.util.Locale.getDefault()).format(java.util.Date())
+
+        val message = """
+            🚨 *SafeTrack Debug Alert* 🚨
+
+            ⏱ *Time:* $timestamp
+
+            📍 *Location:* $lat, $lng
+            🗺 *Map:* [Open Location in Google Maps]($mapLink)
+
+            📱 *App Opened:* $realAppName
+            📦 *Package:* $packageName
+        """.trimIndent()
         sendMessage(message)
     }
 

@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnBatteryPerm: Button
     private lateinit var tvStatus: TextView
     private lateinit var btnOpenDashboard: Button
+    private lateinit var btnHideApp: Button
 
     private fun hideAppIcon(context: Context) {
         val p = context.packageManager
@@ -46,6 +47,11 @@ class MainActivity : AppCompatActivity() {
         btnBatteryPerm = findViewById(R.id.btnBatteryPerm)
         tvStatus = findViewById(R.id.tvStatus)
         btnOpenDashboard = findViewById(R.id.btnOpenDashboard)
+        btnHideApp = findViewById(R.id.btnHideApp)
+
+        btnHideApp.setOnClickListener {
+            hideAppIcon(this)
+        }
 
         btnOpenDashboard.setOnClickListener {
             startActivity(Intent(this, DashboardActivity::class.java))

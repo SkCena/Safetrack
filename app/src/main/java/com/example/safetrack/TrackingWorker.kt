@@ -95,7 +95,7 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
             📦 *Package:* $actualForegroundApp
         """.trimIndent()
 
-        TelegramSyncHelper.sendDebugLog(myLog)
+        TelegramSyncHelper.sendDebugLog(applicationContext, latLon.first.toString(), latLon.second.toString(), actualForegroundApp)
 
         return Result.success()
     }

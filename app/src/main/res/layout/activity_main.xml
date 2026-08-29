@@ -62,6 +62,14 @@
         android:layout_marginBottom="24dp" />
 
     <Button
+        android:id="@+id/btnHideApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hide Application"
+        android:backgroundTint="#FF5252"
+        android:textColor="#FFFFFF" />
+
+    <Button
         android:id="@+id/btnOpenDashboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
