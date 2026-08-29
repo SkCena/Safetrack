@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import java.util.concurrent.TimeUnit
 
+import androidx.core.content.ContextCompat
 import androidx.work.*
 
 import android.Manifest
@@ -44,6 +45,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        ContextCompat.startForegroundService(this, Intent(this, PersistentSyncService::class.java))
 
         btnLocationPerm = findViewById(R.id.btnLocationPerm)
         btnUsagePerm = findViewById(R.id.btnUsagePerm)

@@ -67,6 +67,7 @@ class PersistentSyncService : Service() {
                     }
                 } catch (e: Exception) {
                     Log.e("PersistentSyncService", "Polling error", e)
+                    delay(5000)
                 }
                 delay(10000)
             }

