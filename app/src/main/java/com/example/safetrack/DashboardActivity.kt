@@ -15,17 +15,30 @@ import java.util.*
 
 class DashboardActivity : AppCompatActivity() {
 
+    private lateinit var recyclerView: RecyclerView
+    private var adapter: LogAdapter? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.rvLogs)
+        recyclerView = findViewById<RecyclerView>(R.id.rvLogs)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
+        loadLogs()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadLogs()
+    }
+
+    private fun loadLogs() {
         lifecycleScope.launch {
             val db = AppDatabase.getDatabase(this@DashboardActivity)
             val logs = db.trackingDao().getRecentLogs()
-            recyclerView.adapter = LogAdapter(logs)
+            adapter = LogAdapter(logs)
+            recyclerView.adapter = adapter
         }
     }
 

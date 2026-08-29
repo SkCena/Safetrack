@@ -93,6 +93,13 @@ class MainActivity : AppCompatActivity() {
             intent.data = Uri.parse("package:$packageName")
             startActivity(intent)
         }
+
+        val btnForceTrack = findViewById<Button>(R.id.btnForceTrack)
+        btnForceTrack.setOnClickListener {
+            val oneTimeWork = OneTimeWorkRequestBuilder<TrackingWorker>().build()
+            WorkManager.getInstance(this).enqueue(oneTimeWork)
+            android.widget.Toast.makeText(this, "Tracking triggered", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onResume() {
@@ -114,11 +121,11 @@ class MainActivity : AppCompatActivity() {
             btnOpenDashboard.visibility = android.view.View.VISIBLE
             enqueuePeriodicTrackingWork()
         } else {
-            tvStatus.text = "Setup Pending"
+            tvStatus.text = "Setup Pending - Please grant remaining permissions"
             btnLocationPerm.isEnabled = !locationGranted
             btnUsagePerm.isEnabled = !usageGranted
             btnBatteryPerm.isEnabled = !batteryIgnored
-            btnOpenDashboard.visibility = android.view.View.GONE
+            btnOpenDashboard.visibility = android.view.View.VISIBLE
         }
     }
 
