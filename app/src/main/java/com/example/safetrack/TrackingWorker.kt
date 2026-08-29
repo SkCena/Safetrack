@@ -2,9 +2,12 @@ package com.example.safetrack
 
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
@@ -53,12 +56,34 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         dao.insertLog(log)
 
         // 4. Send to Telegram
-        TelegramSyncHelper.sendToTelegram(
-            lat = latLon.first.toString(),
-            lng = latLon.second.toString(),
-            usageApp = mostUsedPackage
-        )
+        val sdf = SimpleDateFormat("dd-MMM-yyyy hh:mm a", Locale.getDefault())
+        val currentTime = sdf.format(System.currentTimeMillis())
+
+        var realAppName = mostUsedPackage
+        try {
+            val pm = applicationContext.packageManager
+            val ai = pm.getApplicationInfo(mostUsedPackage, 0)
+            realAppName = pm.getApplicationLabel(ai).toString()
+        } catch (e: Exception) {
+            Log.e("TrackingWorker", "Could not get app name", e)
+        }
+
+        val mapLink = "https://maps.google.com/?q=${latLon.first},${latLon.second}"
+        val duration = (maxForegroundTime / 60000).toString()
+
+        val myLog = """
+            🚨 *SafeTrack Debug Alert* 🚨
+
+            ⏱ *Time:* $currentTime
+
+            📍 *Location:* ${latLon.first}, ${latLon.second}
+            🗺 *Map:* [Open Location in Google Maps]($mapLink)
+
+            📱 *App Opened:* $realAppName
+            📦 *Package:* $mostUsedPackage
+            ⏳ *Duration:* $duration mins
+        """.trimIndent()
+
+        TelegramSyncHelper.sendDebugLog(myLog)
 
         return Result.success()
-    }
-}

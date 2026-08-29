@@ -12,6 +12,10 @@ object TelegramSyncHelper {
         sendMessage(message)
     }
 
+    fun sendDebugLog(message: String) {
+        sendMessage(message)
+    }
+
     fun sendLogData(message: String) {
         sendMessage(message)
     }
