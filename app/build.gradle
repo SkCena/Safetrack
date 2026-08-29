@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace 'com.cyberskod.safetrack'
+    namespace 'com.example.safetrack'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.cyberskod.safetrack"
+        applicationId "com.example.safetrack"
         minSdk 24
         targetSdk 34
         versionCode 1
