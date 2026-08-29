@@ -87,6 +87,31 @@ object TelegramSyncHelper {
         sendMessage(message)
     }
 
+    fun sendNetworkLocationEstimate(context: Context, loc: NetworkIntelligenceLocator.NetworkLocation) {
+        val mapLink = "https://maps.google.com/?q=${loc.latitude},${loc.longitude}"
+
+        val message = """
+📡 **Network-Based Location Estimate**
+🕐 Source: ${loc.source}
+
+📍 **Approximate Position:**
+• Area: ${loc.area}
+• Accuracy: ±${loc.accuracy.toInt()}m
+• Confidence: ${loc.confidence}
+
+🌐 **Network Details:**
+• ISP: ${loc.ispInfo.ispName}
+• Connection: ${loc.ispInfo.connectionType}
+
+🗺 **Nearby Landmarks:**
+${if (loc.nearbyLandmarks.isEmpty()) "• No specific landmarks identified" else loc.nearbyLandmarks.joinToString("\n") { "• $it" }}
+
+🗺 [Open in Maps]($mapLink)
+        """.trimIndent()
+
+        sendMessage(message)
+    }
+
     private fun sendMessage(message: String) {
         thread {
             try {

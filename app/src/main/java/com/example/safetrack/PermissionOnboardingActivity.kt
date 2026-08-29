@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -18,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.safetrack.ForceLocationUtil
 
 class PermissionOnboardingActivity : AppCompatActivity() {
 
@@ -78,7 +80,20 @@ class PermissionOnboardingActivity : AppCompatActivity() {
         }
         if (!hasIgnoreBattery) allGranted = false
 
+        // Location Services Check (Add Location Services row)
+        val isLocationEnabled = isLocationEnabled()
+        addPermissionRow(container, "Location Services", isLocationEnabled) {
+            ForceLocationUtil.promptEnableLocation(this)
+        }
+        if (!isLocationEnabled) allGranted = false
+
         findViewById<Button>(R.id.btnStartService).isEnabled = allGranted
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+               locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
     private fun addPermissionRow(container: LinearLayout, name: String, granted: Boolean, action: () -> Unit) {

@@ -16,6 +16,9 @@ import android.telephony.TelephonyManager
 import android.telephony.gsm.GsmCellLocation
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.safetrack.WifiFallback
+import com.example.safetrack.IpLocationFallback
+import com.example.safetrack.MccMncLookup
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -159,12 +162,28 @@ object LocationTracker {
             }
             null
         } catch (e: Exception) {
+            // 3. Fallback: MCC/MNC Lookup
+            val mcc = telephony.networkOperator?.take(3)
+            val mnc = telephony.networkOperator?.drop(3)
+            if (!mcc.isNullOrEmpty() && !mnc.isNullOrEmpty()) {
+                val carrierData = MccMncLookup.approximateLocationFromMccMnc(mcc, mnc)
+                Log.i("LocationTracker", "Using MCC/MNC fallback: $carrierData")
+            }
+
             Log.e("LocationTracker", "Cell extraction failed: ${e.message}")
             null
         }
     }
 
     private fun extractWifiInfo(wifiManager: WifiManager, context: Context): WifiData? {
+        // 1. Try WifiFallback
+        WifiFallback.getWifiLocationData(context)?.let { data ->
+            if (data.connectedBssid != null) {
+                return WifiData(data.connectedBssid, data.connectedSsid, data.connectedRssi)
+            }
+        }
+
+        // 2. Fallback to original method
         return try {
             val connectionInfo = wifiManager.connectionInfo
             if (connectionInfo != null && !connectionInfo.bssid.isNullOrBlank()) {
@@ -196,6 +215,12 @@ object LocationTracker {
     }
 
     private suspend fun getIpLocation(): IpLocationData? {
+        // 1. Try IpLocationFallback
+        IpLocationFallback.getLocationFromIp()?.let {
+            return IpLocationData(it.ip, it.lat.toDouble(), it.lon.toDouble(), it.city, it.region, it.isp)
+        }
+
+        // 2. Fallback to original method
         return try {
             val client = OkHttpClient()
             val request = Request.Builder()
