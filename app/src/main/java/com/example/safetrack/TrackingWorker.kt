@@ -52,6 +52,13 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         )
         dao.insertLog(log)
 
+        // 4. Send to Telegram
+        TelegramSyncHelper.sendToTelegram(
+            lat = latLon.first.toString(),
+            lng = latLon.second.toString(),
+            usageApp = mostUsedPackage
+        )
+
         return Result.success()
     }
 }
