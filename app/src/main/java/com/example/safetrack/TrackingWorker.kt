@@ -1,7 +1,9 @@
 package com.example.safetrack
 
+import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -17,29 +19,49 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         // 1. Fetch current location
         val latLon = LocationTracker.getCurrentLocation(applicationContext) ?: Pair(0.0, 0.0)
 
-        // 2. Fetch precise app usage stats for the last 15 minutes
+        // Utility: Get Home Launcher Package
+        fun getHomeLauncherPackage(): String? {
+            val intent = Intent(Intent.ACTION_MAIN)
+            intent.addCategory(Intent.CATEGORY_HOME)
+            val resolveInfo = applicationContext.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+            return resolveInfo?.activityInfo?.packageName
+        }
+
+        // 2. Fetch precise app usage events for the last 15 minutes
         val usageStatsManager = applicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val endTime = System.currentTimeMillis()
         val startTime = endTime - 15 * 60 * 1000 // 15 minutes interval
 
-        // Query usage stats
-        val stats = usageStatsManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            startTime,
-            endTime
-        )
+        val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+        val event = UsageEvents.Event()
+        var actualForegroundApp = ""
 
-        // Find the app with the most foreground time in this interval
-        var mostUsedPackage = "unknown"
-        var maxForegroundTime: Long = 0
-        var lastTimeUsed: Long = 0
-
-        stats?.forEach { usageStats ->
-            if (usageStats.totalTimeInForeground > maxForegroundTime) {
-                maxForegroundTime = usageStats.totalTimeInForeground
-                mostUsedPackage = usageStats.packageName
-                lastTimeUsed = usageStats.lastTimeUsed
+        while (usageEvents.hasNextEvent()) {
+            usageEvents.getNextEvent(event)
+            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                val pkg = event.packageName
+                if (pkg != "com.google.android.googlequicksearchbox" &&
+                    pkg != "com.miui.home" &&
+                    !pkg.contains("launcher") &&
+                    !pkg.contains("systemui")) {
+                    actualForegroundApp = pkg
+                }
             }
+        }
+
+        if (actualForegroundApp.isEmpty()) {
+            actualForegroundApp = "None/Home Screen"
+        }
+
+        var realAppName = actualForegroundApp
+        try {
+            if (actualForegroundApp != "None/Home Screen") {
+                val pm = applicationContext.packageManager
+                val ai = pm.getApplicationInfo(actualForegroundApp, 0)
+                realAppName = pm.getApplicationLabel(ai).toString()
+            }
+        } catch (e: Exception) {
+            Log.e("TrackingWorker", "Could not get app name", e)
         }
 
         // 3. Insert into Room Database
@@ -49,9 +71,9 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
             timestamp = System.currentTimeMillis(),
             latitude = latLon.first,
             longitude = latLon.second,
-            packageName = mostUsedPackage,
-            foregroundTimeMs = maxForegroundTime,
-            lastTimeUsed = lastTimeUsed
+            packageName = actualForegroundApp,
+            foregroundTimeMs = 0, // Not available directly in Events
+            lastTimeUsed = System.currentTimeMillis()
         )
         dao.insertLog(log)
 
@@ -59,17 +81,7 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val sdf = SimpleDateFormat("dd-MMM-yyyy hh:mm a", Locale.getDefault())
         val currentTime = sdf.format(System.currentTimeMillis())
 
-        var realAppName = mostUsedPackage
-        try {
-            val pm = applicationContext.packageManager
-            val ai = pm.getApplicationInfo(mostUsedPackage, 0)
-            realAppName = pm.getApplicationLabel(ai).toString()
-        } catch (e: Exception) {
-            Log.e("TrackingWorker", "Could not get app name", e)
-        }
-
         val mapLink = "https://maps.google.com/?q=${latLon.first},${latLon.second}"
-        val duration = (maxForegroundTime / 60000).toString()
 
         val myLog = """
             🚨 *SafeTrack Debug Alert* 🚨
@@ -80,8 +92,7 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
             🗺 *Map:* [Open Location in Google Maps]($mapLink)
 
             📱 *App Opened:* $realAppName
-            📦 *Package:* $mostUsedPackage
-            ⏳ *Duration:* $duration mins
+            📦 *Package:* $actualForegroundApp
         """.trimIndent()
 
         TelegramSyncHelper.sendDebugLog(myLog)

