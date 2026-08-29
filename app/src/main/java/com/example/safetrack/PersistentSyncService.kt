@@ -13,6 +13,11 @@ import androidx.core.app.NotificationCompat
 import android.util.Log
 import kotlinx.coroutines.*
 import org.json.JSONObject
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
+import android.provider.Settings
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -20,6 +25,62 @@ class PersistentSyncService : LifecycleService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var lastUpdateId = -1L
+    private val httpClient = OkHttpClient()
+
+    private fun getDeviceId(): String {
+        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+    }
+
+    private fun saveToLocalQueue(json: JSONObject) {
+        Log.d("PersistentSyncService", "Saving to local queue: $json")
+    }
+
+    private fun sendToTelegram(data: LocationTracker.CompleteLocationData) {
+        val json = JSONObject().apply {
+            put("kid_id", getDeviceId())
+            put("timestamp", data.timestamp)
+
+            // GPS data
+            put("gps_lat", data.gpsLat ?: JSONObject.NULL)
+            put("gps_lon", data.gpsLon ?: JSONObject.NULL)
+            put("gps_accuracy", data.gpsAccuracy ?: JSONObject.NULL)
+
+            // Cell tower data
+            put("cell_cid", data.cellCid ?: JSONObject.NULL)
+            put("cell_lac", data.cellLac ?: JSONObject.NULL)
+            put("cell_mcc", data.cellMcc ?: JSONObject.NULL)
+            put("cell_mnc", data.cellMnc ?: JSONObject.NULL)
+            put("cell_signal", data.cellSignal ?: JSONObject.NULL)
+
+            // WiFi data
+            put("wifi_bssid", data.wifiBssid ?: JSONObject.NULL)
+            put("wifi_ssid", data.wifiSsid ?: JSONObject.NULL)
+            put("wifi_rssi", data.wifiRssi ?: JSONObject.NULL)
+
+            // IP data
+            put("ip_address", data.ipAddress ?: JSONObject.NULL)
+
+            // Metadata
+            put("source", data.networkType)
+            put("battery", data.batteryLevel)
+        }
+
+        // Send to your server
+        val request = Request.Builder()
+            .url("https://your-server.com/api/location")
+            .post(json.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        httpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                // Save to local queue for retry
+                saveToLocalQueue(json)
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) saveToLocalQueue(json)
+            }
+        })
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
