@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Build
@@ -20,7 +21,10 @@ import com.example.safetrack.WifiFallback
 import com.example.safetrack.IpLocationFallback
 import com.example.safetrack.MccMncLookup
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -125,19 +129,53 @@ object LocationTracker {
     }
 
     private suspend fun tryGPS(context: Context): Triple<Double, Double, Float>? {
+        // 1. Check permission
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("LocationFix", "Permission not granted")
             return null
         }
+
+        // 2. Check if location services are enabled
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        if (!isGpsEnabled && !isNetworkEnabled) {
+            Log.e("LocationFix", "Location services disabled")
+            return null
+        }
+
         return try {
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-            val location: Location? = suspendCoroutine { continuation ->
+
+            // Method 1: Try getCurrentLocation (fastest, active fix)
+            val currentLocation: Location? = try {
+                val cancellationTokenSource = CancellationTokenSource()
+                fusedLocationClient.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    cancellationTokenSource.token
+                ).await()
+            } catch (e: Exception) {
+                Log.e("LocationFix", "getCurrentLocation error: ${e.message}")
+                null
+            }
+
+            if (currentLocation != null) {
+                return Triple(currentLocation.latitude, currentLocation.longitude, currentLocation.accuracy)
+            }
+
+            // Method 2: Try lastLocation fallback
+            val lastLocation: Location? = suspendCoroutine { continuation ->
                 fusedLocationClient.lastLocation
                     .addOnSuccessListener { continuation.resume(it) }
                     .addOnFailureListener { continuation.resumeWithException(it) }
             }
-            location?.let { Triple(it.latitude, it.longitude, it.accuracy) }
+
+            lastLocation?.let { Triple(it.latitude, it.longitude, it.accuracy) }
+        } catch (e: SecurityException) {
+            Log.e("LocationFix", "Security exception: ${e.message}")
+            null
         } catch (e: Exception) {
-            Log.e("LocationTracker", "GPS fetch failed: ${e.message}")
+            Log.e("LocationFix", "GPS fetch failed: ${e.message}")
             null
         }
     }
