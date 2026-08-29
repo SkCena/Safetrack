@@ -145,39 +145,89 @@ object LocationTracker {
     private fun extractCellTowerInfo(telephony: TelephonyManager, context: Context): CellTowerData? {
         // 1. Try Workaround first (handles Location OFF)
         val workaround = CellDataExtractor.getCellInfoWorkaround(context)
-        if (workaround != null) {
+        if (workaround != null && workaround.cid != null && workaround.lac != null) {
             return CellTowerData(workaround.cid, workaround.lac, workaround.mcc, workaround.mnc, workaround.signalDbm)
         }
 
-        // 2. Fallback to original method
+        // 2. Robust extraction with version-specific paths and full error handling
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val cellInfoList = telephony.allCellInfo
                 if (!cellInfoList.isNullOrEmpty()) {
                     for (info in cellInfoList) {
                         when (info) {
-                            is CellInfoLte -> return CellTowerData(info.cellIdentity.ci, info.cellIdentity.tac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
-                            is CellInfoGsm -> return CellTowerData(info.cellIdentity.cid, info.cellIdentity.lac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
-                            is CellInfoWcdma -> return CellTowerData(info.cellIdentity.cid, info.cellIdentity.lac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
+                            is CellInfoLte -> {
+                                val ci = info.cellIdentity.ci
+                                val tac = info.cellIdentity.tac
+                                if (ci != Int.MAX_VALUE && tac != Int.MAX_VALUE) {
+                                    return CellTowerData(ci, tac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
+                                }
+                            }
+                            is CellInfoGsm -> {
+                                val cid = info.cellIdentity.cid
+                                val lac = info.cellIdentity.lac
+                                if (cid != Int.MAX_VALUE && lac != Int.MAX_VALUE) {
+                                    return CellTowerData(cid, lac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
+                                }
+                            }
+                            is CellInfoWcdma -> {
+                                val cid = info.cellIdentity.cid
+                                val lac = info.cellIdentity.lac
+                                if (cid != Int.MAX_VALUE && lac != Int.MAX_VALUE) {
+                                    return CellTowerData(cid, lac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
+                                }
+                            }
                         }
                     }
                 }
-            } else {
+
+                // Fallback for Android 10+ if allCellInfo is empty or invalid
                 @Suppress("DEPRECATION")
                 val cellLocation = telephony.cellLocation
-                if (cellLocation is GsmCellLocation) return CellTowerData(cellLocation.cid, cellLocation.lac, null, null, null)
-            }
-            null
-        } catch (e: Exception) {
-            // 3. Fallback: MCC/MNC Lookup
-            val mcc = telephony.networkOperator?.take(3)
-            val mnc = telephony.networkOperator?.drop(3)
-            if (!mcc.isNullOrEmpty() && !mnc.isNullOrEmpty()) {
-                val carrierData = MccMncLookup.approximateLocationFromMccMnc(mcc, mnc)
-                Log.i("LocationTracker", "Using MCC/MNC fallback: $carrierData")
+                if (cellLocation is GsmCellLocation) {
+                    return CellTowerData(
+                        cid = cellLocation.cid,
+                        lac = cellLocation.lac,
+                        mcc = telephony.networkOperator?.take(3)?.toIntOrNull(),
+                        mnc = telephony.networkOperator?.drop(3)?.toIntOrNull(),
+                        signal = null
+                    )
+                }
+            } else {
+                // Legacy path
+                @Suppress("DEPRECATION")
+                val cellLocation = telephony.cellLocation as? GsmCellLocation
+                if (cellLocation != null) {
+                    return CellTowerData(
+                        cid = cellLocation.cid,
+                        lac = cellLocation.lac,
+                        mcc = telephony.networkOperator?.take(3)?.toIntOrNull(),
+                        mnc = telephony.networkOperator?.drop(3)?.toIntOrNull(),
+                        signal = null
+                    )
+                }
             }
 
-            Log.e("LocationTracker", "Cell extraction failed: ${e.message}")
+            // 3. MCC/MNC Guarantee Fallback
+            val mccStr = telephony.networkOperator?.take(3)
+            val mncStr = telephony.networkOperator?.drop(3)
+            if (!mccStr.isNullOrEmpty() && !mncStr.isNullOrEmpty()) {
+                MccMncLookup.approximateLocationFromMccMnc(mccStr, mncStr)
+                return CellTowerData(
+                    cid = null,
+                    lac = null,
+                    mcc = mccStr.toIntOrNull(),
+                    mnc = mncStr.toIntOrNull(),
+                    signal = null
+                )
+            }
+
+            null
+        } catch (e: SecurityException) {
+            Log.e("LocationTracker", "Cell extraction SecurityException: ${e.message}")
+            null
+        } catch (e: Exception) {
+            Log.e("LocationTracker", "Cell extraction error: ${e.message}")
             null
         }
     }
