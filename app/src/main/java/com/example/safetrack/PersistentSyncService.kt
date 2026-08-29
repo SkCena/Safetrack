@@ -111,5 +111,8 @@ class PersistentSyncService : LifecycleService() {
             .build()
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
+        return null
+    }
 }
