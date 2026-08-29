@@ -1,13 +1,56 @@
 package com.example.safetrack
 
 import android.content.Context
+import android.provider.Settings
 import android.util.Log
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import kotlin.concurrent.thread
 
 object TelegramSyncHelper {
+
+    fun sendToTelegram(context: Context, data: LocationTracker.CompleteLocationData) {
+        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+        val json = JSONObject().apply {
+            put("kid_id", deviceId)
+            put("timestamp", data.timestamp)
+            put("gps_lat", data.gpsLat ?: JSONObject.NULL)
+            put("gps_lon", data.gpsLon ?: JSONObject.NULL)
+            put("gps_accuracy", data.gpsAccuracy ?: JSONObject.NULL)
+            put("cell_cid", data.cellCid ?: JSONObject.NULL)
+            put("cell_lac", data.cellLac ?: JSONObject.NULL)
+            put("cell_mcc", data.cellMcc ?: JSONObject.NULL)
+            put("cell_mnc", data.cellMnc ?: JSONObject.NULL)
+            put("cell_signal", data.cellSignal ?: JSONObject.NULL)
+            put("wifi_bssid", data.wifiBssid ?: JSONObject.NULL)
+            put("wifi_ssid", data.wifiSsid ?: JSONObject.NULL)
+            put("wifi_rssi", data.wifiRssi ?: JSONObject.NULL)
+            put("ip_address", data.ipAddress ?: JSONObject.NULL)
+            put("source", data.networkType)
+            put("battery", data.batteryLevel)
+        }
+
+        val request = Request.Builder()
+            .url("https://your-server.com/api/location")
+            .post(json.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        OkHttpClient().newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("TelegramSyncHelper", "Failed to send location data", e)
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) Log.e("TelegramSyncHelper", "Server error: ${response.code}")
+            }
+        })
+    }
+
     fun sendToTelegram(lat: String, lng: String, usageApp: String) {
         val message = "🚨 *SafeTrack Alert*\n\n📍 *Location:* $lat, $lng\n📱 *App Usage:* $usageApp"
         sendMessage(message)

