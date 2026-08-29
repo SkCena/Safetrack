@@ -13,7 +13,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- Application tag with default Android icon and stable AppCompat theme -->
     <application
         android:allowBackup="true"
         android:icon="@android:drawable/sym_def_app_icon"
@@ -30,6 +29,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".DashboardActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".BootReceiver"
             android:exported="true"
@@ -39,5 +42,14 @@
             </intent-filter>
         </receiver>
 
+        <service android:name=".services.SafeTrackAccessibilityService" 
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" 
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" 
+                android:resource="@xml/accessibility_service_config" />
+        </service>
     </application>
 </manifest>

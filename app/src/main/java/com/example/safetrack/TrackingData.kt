@@ -9,6 +9,8 @@ data class TrackingData(
     val timestamp: Long,
     val latitude: Double,
     val longitude: Double,
-    val appUsageStats: String,
+    val packageName: String,
+    val foregroundTimeMs: Long,
+    val lastTimeUsed: Long,
     val isSynced: Boolean = false
 )

@@ -12,8 +12,8 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnUsagePerm: Button
     private lateinit var btnBatteryPerm: Button
     private lateinit var tvStatus: TextView
+    private lateinit var btnOpenDashboard: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +32,11 @@ class MainActivity : AppCompatActivity() {
         btnUsagePerm = findViewById(R.id.btnUsagePerm)
         btnBatteryPerm = findViewById(R.id.btnBatteryPerm)
         tvStatus = findViewById(R.id.tvStatus)
+        btnOpenDashboard = findViewById(R.id.btnOpenDashboard)
+
+        btnOpenDashboard.setOnClickListener {
+            startActivity(Intent(this, DashboardActivity::class.java))
+        }
 
         btnLocationPerm.setOnClickListener {
             ActivityCompat.requestPermissions(
@@ -71,18 +77,30 @@ class MainActivity : AppCompatActivity() {
             btnLocationPerm.isEnabled = false
             btnUsagePerm.isEnabled = false
             btnBatteryPerm.isEnabled = false
-            enqueuePeriodicSync()
+            btnOpenDashboard.visibility = android.view.View.VISIBLE
+            enqueuePeriodicTrackingWork()
         } else {
             tvStatus.text = "Setup Pending"
             btnLocationPerm.isEnabled = !locationGranted
             btnUsagePerm.isEnabled = !usageGranted
             btnBatteryPerm.isEnabled = !batteryIgnored
+            btnOpenDashboard.visibility = android.view.View.GONE
         }
     }
 
-    private fun enqueuePeriodicSync() {
-        val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(30, TimeUnit.MINUTES)
+    private fun enqueuePeriodicTrackingWork() {
+        val constraints = Constraints.Builder()
+            .setRequiresBatteryNotLow(true)
             .build()
-        WorkManager.getInstance(this).enqueue(syncRequest)
+
+        val trackingRequest = PeriodicWorkRequestBuilder<TrackingWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "TrackingWork",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            trackingRequest
+        )
     }
 }
