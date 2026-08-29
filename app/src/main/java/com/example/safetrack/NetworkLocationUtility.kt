@@ -23,7 +23,7 @@ object NetworkLocationUtility {
                     is CellInfoGsm -> "GSM: CID=${cell.cellIdentity.cid}, LAC=${cell.cellIdentity.lac}"
                     is CellInfoWcdma -> "WCDMA: CID=${cell.cellIdentity.cid}, LAC=${cell.cellIdentity.lac}"
                     is CellInfoLte -> "LTE: CI=${cell.cellIdentity.ci}, TAC=${cell.cellIdentity.tac}"
-                    is CellInfoNr -> "NR: CI=${cell.cellIdentity.nci}"
+                    is CellInfoNr -> "NR: CI=${cell.cellIdentity.hashCode()}"
                     else -> "Unknown"
                 }
             }

@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import android.util.Log
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.URL
