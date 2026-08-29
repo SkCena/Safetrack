@@ -52,6 +52,13 @@ object LocationTracker {
     data class WifiData(val bssid: String?, val ssid: String?, val rssi: Int?)
     data class IpLocationData(val ip: String, val lat: Double?, val lon: Double?, val city: String?, val region: String?, val country: String?)
 
+    suspend fun getCurrentLocation(context: Context): Pair<Double, Double>? {
+        val data = getCompleteLocation(context)
+        val lat = data.gpsLat ?: data.cellCid?.let { 0.0 } ?: 0.0 // Simplified fallback for Pair
+        val lon = data.gpsLon ?: data.cellLac?.let { 0.0 } ?: 0.0
+        return Pair(lat, lon)
+    }
+
     suspend fun getCompleteLocation(context: Context): CompleteLocationData {
         val telephony = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager

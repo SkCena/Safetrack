@@ -27,7 +27,7 @@ class PersistentSyncService : LifecycleService() {
     private var lastUpdateId = -1L
     private val httpClient = OkHttpClient()
 
-    private fun getDeviceId(): String {
+    private fun fetchDeviceIdentifier(): String {
         return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
     }
 

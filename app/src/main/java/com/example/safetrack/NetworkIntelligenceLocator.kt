@@ -71,7 +71,7 @@ object NetworkIntelligenceLocator {
                         return NetworkLocation(
                             latitude = json.getDouble("lat"),
                             longitude = json.getDouble("lon"),
-                            accuracy = json.optFloat("accuracy", 50f),
+                            accuracy = json.optDouble("accuracy", 50.0).toFloat(),
                             confidence = "high",
                             source = "wifi_db",
                             area = json.optString("area", "Unknown"),
@@ -166,7 +166,7 @@ object NetworkIntelligenceLocator {
                         return NetworkLocation(
                             latitude = json.getDouble("lat"),
                             longitude = json.getDouble("lon"),
-                            accuracy = json.optFloat("range", 1000f),
+                            accuracy = json.optDouble("range", 1000.0).toFloat(),
                             confidence = "medium",
                             source = "cell_tower",
                             area = json.optString("address", "Unknown Area"),
