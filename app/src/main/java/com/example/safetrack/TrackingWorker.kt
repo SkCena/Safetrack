@@ -81,8 +81,8 @@ class TrackingWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val dao = database.trackingDao()
         val log = TrackingData(
             timestamp = System.currentTimeMillis(),
-            latitude = latLon.first,
-            longitude = latLon.second,
+            latitude = finalLatLon.first,
+            longitude = finalLatLon.second,
             packageName = actualForegroundApp,
             foregroundTimeMs = 0, // Not available directly in Events
             lastTimeUsed = System.currentTimeMillis()
