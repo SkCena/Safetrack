@@ -47,7 +47,7 @@ class DashboardActivity : AppCompatActivity() {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             holder.tvTimestamp.text = sdf.format(Date(log.timestamp))
             holder.tvLocation.text = "Lat: ${log.latitude}, Lng: ${log.longitude}"
-            holder.tvUsage.text = "Usage: ${log.appUsageStats}"
+            holder.tvUsage.text = "Usage: ${log.packageName}"
         }
 
         override fun getItemCount() = logs.size
