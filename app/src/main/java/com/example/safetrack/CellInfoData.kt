@@ -14,8 +14,8 @@ data class CellInfoData(
     val nci: Long? = null,
     val nrArfcn: Int? = null,
     val ssRsrp: Int? = null,
-    val ssRsrq: Int? = null,
-    val ssSinr: Int? = null,
+    val csiRsrp: Int? = null,
+    val csiSinr: Int? = null,
 
     // LTE specific
     val lteCi: Int? = null,

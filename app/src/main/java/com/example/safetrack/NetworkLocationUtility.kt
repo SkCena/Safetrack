@@ -37,7 +37,10 @@ object NetworkLocationUtility {
                         is CellInfoGsm -> "GSM: CID=${cell.cellIdentity.cid}, LAC=${cell.cellIdentity.lac}"
                         is CellInfoWcdma -> "WCDMA: CID=${cell.cellIdentity.cid}, LAC=${cell.cellIdentity.lac}"
                         is CellInfoLte -> "LTE: CI=${cell.cellIdentity.ci}, TAC=${cell.cellIdentity.tac}"
-                        is CellInfoNr -> "NR: CI=${cell.cellIdentity.hashCode()}"
+                        is CellInfoNr -> {
+                            val nrId = cell.cellIdentity as android.telephony.CellIdentityNr
+                            "NR: NCI=${nrId.nci}, TAC=${nrId.tac}"
+                        }
                         else -> "Unknown Cell Type"
                     }
                 }

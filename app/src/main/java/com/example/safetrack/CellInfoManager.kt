@@ -77,8 +77,8 @@ class CellInfoManager(private val context: Context) : TelephonyCallback(),
                     nci = identity.nci, // LONG NCI - REQUIRED
                     nrArfcn = identity.nrarfcn,
                     ssRsrp = info.cellSignalStrength.ssRsrp,
-                    ssRsrq = info.cellSignalStrength.ssRsrq,
-                    ssSinr = info.cellSignalStrength.ssSinr,
+                    csiRsrp = info.cellSignalStrength.csiRsrp,
+                    csiSinr = info.cellSignalStrength.csiSinr,
                     isRegistered = info.isRegistered
                 )
             }
