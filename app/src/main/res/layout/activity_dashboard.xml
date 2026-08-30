@@ -39,6 +39,26 @@
         android:layout_height="1dp"
         android:background="@color/divider" />
 
+    <!-- Live Cell Info -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvLiveCellInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/space_md"
+        app:cardBackgroundColor="@color/bg_surface_elevated"
+        app:cardCornerRadius="@dimen/radius_md">
+
+        <TextView
+            android:id="@+id/tvLiveCellInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/space_md"
+            android:text="Waiting for network info..."
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_body" />
+
+    </androidx.cardview.widget.CardView>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLogs"
         android:layout_width="match_parent"
