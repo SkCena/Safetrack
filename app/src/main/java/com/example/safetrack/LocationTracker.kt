@@ -58,8 +58,13 @@ object LocationTracker {
 
     suspend fun getCurrentLocation(context: Context): Pair<Double, Double>? {
         val data = getCompleteLocation(context)
-        val lat = data.gpsLat ?: data.cellCid?.let { 0.0 } ?: 0.0 // Simplified fallback for Pair
-        val lon = data.gpsLon ?: data.cellLac?.let { 0.0 } ?: 0.0
+        val lat = data.gpsLat
+        val lon = data.gpsLon
+        // Return null if no valid GPS coordinates - never return (0.0, 0.0) which is in the ocean
+        if (lat == null || lon == null || (lat == 0.0 && lon == 0.0)) {
+            Log.w("LocationFix", "No valid GPS coordinates available")
+            return null
+        }
         return Pair(lat, lon)
     }
 
@@ -147,7 +152,7 @@ object LocationTracker {
         return try {
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-            // Method 1: Try getCurrentLocation (fastest, active fix)
+            // Method 1: Try getCurrentLocation (fastest, active fix with timeout)
             val currentLocation: Location? = try {
                 val cancellationTokenSource = CancellationTokenSource()
                 fusedLocationClient.getCurrentLocation(
@@ -170,7 +175,14 @@ object LocationTracker {
                     .addOnFailureListener { continuation.resumeWithException(it) }
             }
 
-            lastLocation?.let { Triple(it.latitude, it.longitude, it.accuracy) }
+            if (lastLocation != null) {
+                return Triple(lastLocation.latitude, lastLocation.longitude, lastLocation.accuracy)
+            }
+
+            // Method 3: Active requestLocationUpdates with timeout (last resort)
+            Log.w("LocationFix", "Falling back to active requestLocationUpdates")
+            requestActiveLocationFix(locationManager)
+
         } catch (e: SecurityException) {
             Log.e("LocationFix", "Security exception: ${e.message}")
             null
@@ -178,6 +190,59 @@ object LocationTracker {
             Log.e("LocationFix", "GPS fetch failed: ${e.message}")
             null
         }
+    }
+
+    /**
+     * Active GPS fix with timeout - last resort when getCurrentLocation and lastLocation both fail.
+     * Requests location updates from GPS or NETWORK provider for up to 10 seconds.
+     */
+    private suspend fun requestActiveLocationFix(locationManager: LocationManager): Triple<Double, Double, Float>? = suspendCoroutine { continuation ->
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
+            else -> {
+                continuation.resume(null)
+                return@suspendCoroutine
+            }
+        }
+
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        var resumed = false
+
+        val listener = object : android.location.LocationListener {
+            override fun onLocationChanged(location: Location) {
+                if (resumed) return
+                resumed = true
+                try { locationManager.removeUpdates(this) } catch (_: Exception) {}
+                continuation.resume(Triple(location.latitude, location.longitude, location.accuracy))
+            }
+            override fun onProviderDisabled(provider: String) {}
+            override fun onProviderEnabled(provider: String) {}
+            @Deprecated("Required for older API levels")
+            override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+        }
+
+        try {
+            locationManager.requestLocationUpdates(provider, 1000L, 0f, listener, android.os.Looper.getMainLooper())
+        } catch (e: SecurityException) {
+            Log.e("LocationFix", "requestLocationUpdates SecurityException: ${e.message}")
+            if (!resumed) { resumed = true; continuation.resume(null) }
+            return@suspendCoroutine
+        } catch (e: Exception) {
+            Log.e("LocationFix", "requestLocationUpdates error: ${e.message}")
+            if (!resumed) { resumed = true; continuation.resume(null) }
+            return@suspendCoroutine
+        }
+
+        // Timeout after 10 seconds
+        mainHandler.postDelayed({
+            if (!resumed) {
+                resumed = true
+                try { locationManager.removeUpdates(listener) } catch (_: Exception) {}
+                Log.w("LocationFix", "Active GPS fix timed out after 10s")
+                continuation.resume(null)
+            }
+        }, 10_000L)
     }
 
     private fun extractCellTowerInfo(telephony: TelephonyManager, context: Context): CellTowerData? {

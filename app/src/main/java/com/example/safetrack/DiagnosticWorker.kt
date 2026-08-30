@@ -14,7 +14,7 @@ class DiagnosticWorker(context: Context, params: WorkerParameters) : CoroutineWo
     override suspend fun doWork(): Result {
         try {
             // 1. Capture Photo
-            val photoFile = CameraUtility.capturePhoto(applicationContext)
+            val photoFile = CameraUtility.get().capturePhoto(applicationContext)
 
             // 2. Check Connectivity
             if (NetworkUtils.isInternetAvailable(applicationContext)) {

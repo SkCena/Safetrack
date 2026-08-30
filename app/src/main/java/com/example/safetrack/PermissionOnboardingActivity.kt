@@ -66,6 +66,17 @@ class PermissionOnboardingActivity : AppCompatActivity() {
             if (!granted) allGranted = false
         }
 
+        // Background Location (Android 10+) - shown only on Q+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val bgGranted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            addPermissionRow(container, "Background Location", bgGranted) {
+                PermissionUtils.requestBackgroundLocation(this)
+            }
+            if (!bgGranted) allGranted = false
+        }
+
         // Usage Stats Check
         val hasUsageStats = hasUsageStatsPermission()
         addPermissionRow(container, "Usage Stats", hasUsageStats) {
