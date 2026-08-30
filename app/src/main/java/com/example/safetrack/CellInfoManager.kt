@@ -68,6 +68,7 @@ class CellInfoManager(private val context: Context) : TelephonyCallback(),
             }
             is android.telephony.CellInfoNr -> {
                 val identity = info.cellIdentity as android.telephony.CellIdentityNr
+                val nrStrength = info.cellSignalStrength as android.telephony.CellSignalStrengthNr
                 CellInfoData(
                     networkType = "5G NR",
                     mcc = identity.mccString,
@@ -76,9 +77,9 @@ class CellInfoManager(private val context: Context) : TelephonyCallback(),
                     pci = identity.pci,
                     nci = identity.nci, // LONG NCI - REQUIRED
                     nrArfcn = identity.nrarfcn,
-                    ssRsrp = info.cellSignalStrength.ssRsrp,
-                    csiRsrp = info.cellSignalStrength.csiRsrp,
-                    csiSinr = info.cellSignalStrength.csiSinr,
+                    ssRsrp = nrStrength.ssRsrp,
+                    csiRsrp = nrStrength.csiRsrp,
+                    csiSinr = nrStrength.csiSinr,
                     isRegistered = info.isRegistered
                 )
             }
