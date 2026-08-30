@@ -10,7 +10,7 @@
         <item name="android:navigationBarColor" tools:targetApi="21">@color/bg_root</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
-   </style>
+  </style>
 
     <!-- Reusable button styles -->
     <style name="Widget.SafeTrack.Button" parent="Widget.MaterialComponents.Button">
@@ -20,27 +20,27 @@
         <item name="android:letterSpacing">0.02</item>
         <item name="android:paddingTop">@dimen/space_md</item>
         <item name="android:paddingBottom">@dimen/space_md</item>
-   </style>
+  </style>
 
     <style name="Widget.SafeTrack.Button.Primary">
         <item name="backgroundTint">@color/brand_primary</item>
         <item name="android:textColor">@color/text_on_brand</item>
-   </style>
+  </style>
 
     <style name="Widget.SafeTrack.Button.Secondary">
         <item name="backgroundTint">@color/bg_surface_elevated</item>
         <item name="android:textColor">@color/text_primary</item>
-   </style>
+  </style>
 
     <style name="Widget.SafeTrack.Button.Danger">
         <item name="backgroundTint">@color/status_error</item>
         <item name="android:textColor">@color/text_primary</item>
-   </style>
+  </style>
 
     <style name="Widget.SafeTrack.Button.Warning">
         <item name="backgroundTint">@color/status_warning</item>
         <item name="android:textColor">@color/text_on_brand</item>
-   </style>
+  </style>
 
     <!-- Card style -->
     <style name="Widget.SafeTrack.Card" parent="Widget.MaterialComponents.CardView">
@@ -48,30 +48,35 @@
         <item name="cardCornerRadius">@dimen/radius_lg</item>
         <item name="cardElevation">2dp</item>
         <item name="contentPadding">@dimen/space_md</item>
-   </style>
+  </style>
 
-    <!-- Title style -->
-    <style name="TextAppearance.SafeTrack.Headline">
+    <!-- Base text appearance - required so dotted-name variants can resolve their parent -->
+    <style name="TextAppearance.SafeTrack" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_body</item>
+ </style>
+
+    <style name="TextAppearance.SafeTrack.Headline" parent="TextAppearance.SafeTrack">
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">@dimen/text_headline</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.01</item>
-   </style>
+ </style>
 
-    <style name="TextAppearance.SafeTrack.Title">
+    <style name="TextAppearance.SafeTrack.Title" parent="TextAppearance.SafeTrack">
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">@dimen/text_title</item>
         <item name="android:textStyle">bold</item>
-   </style>
+ </style>
 
-    <style name="TextAppearance.SafeTrack.Body">
+    <style name="TextAppearance.SafeTrack.Body" parent="TextAppearance.SafeTrack">
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textSize">@dimen/text_body</item>
-   </style>
+ </style>
 
-    <style name="TextAppearance.SafeTrack.Caption">
+    <style name="TextAppearance.SafeTrack.Caption" parent="TextAppearance.SafeTrack">
         <item name="android:textColor">@color/text_tertiary</item>
         <item name="android:textSize">@dimen/text_caption</item>
-   </style>
+ </style>
 
 </resources>
