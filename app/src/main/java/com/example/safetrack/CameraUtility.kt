@@ -90,14 +90,11 @@ class CameraUtility {
                 }
 
                 // Bind to a LifecycleOwner - service/activity contexts both qualify
-                val lifecycleOwner: LifecycleOwner = when (context) {
-                    is LifecycleOwner -> context
-                    else -> {
-                        // Fall back to ProcessLifecycleOwner (app-wide) when context is not a LifecycleOwner
-                        // e.g. DiagnosticWorker / applicationContext
-                        androidx.lifecycle.ProcessLifecycleOwner.get()
-                    }
+                val lifecycleOwner: LifecycleOwner = findLifecycleOwner(context) ?: run {
+                    Log.w("Camera", "Could not find LifecycleOwner, falling back to ProcessLifecycleOwner")
+                    androidx.lifecycle.ProcessLifecycleOwner.get()
                 }
+                Log.d("Camera", "Binding to LifecycleOwner: ${lifecycleOwner::class.java.simpleName}")
 
                 cameraProvider.bindToLifecycle(
                     lifecycleOwner,
@@ -143,6 +140,15 @@ class CameraUtility {
                 continuation.resumeWithException(e)
             }
         }, mainExecutor)
+    }
+
+    private fun findLifecycleOwner(context: Context): LifecycleOwner? {
+        var current = context
+        while (current is android.content.ContextWrapper) {
+            if (current is LifecycleOwner) return current
+            current = current.baseContext
+        }
+        return null
     }
 
     /**
