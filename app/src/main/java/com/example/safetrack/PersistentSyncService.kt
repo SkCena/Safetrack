@@ -75,7 +75,7 @@ class PersistentSyncService : LifecycleService() {
                     val urlString = "https://api.telegram.org/bot$botToken/getUpdates?offset=${lastUpdateId + 1}"
 
                     val url = URL(urlString)
-                    val connection = url.openConnection as HttpURLConnection
+                    val connection = url.openConnection() as HttpURLConnection
                     connection.connectTimeout = 10000
                     connection.readTimeout = 10000
 
