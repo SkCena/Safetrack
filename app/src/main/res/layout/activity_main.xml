@@ -1,98 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
-    android:background="#121212">
+    android:background="@color/bg_root"
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="CyberSkOD Free"
-        android:textColor="#00E676"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="SafeTrack"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:layout_marginBottom="32dp" />
-
-    <Button
-        android:id="@+id/btnLocationPerm"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Grant Location Permission"
-        android:backgroundTint="#333333"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="8dp" />
+        android:orientation="vertical"
+        android:padding="@dimen/space_lg">
 
-    <Button
-        android:id="@+id/btnUsagePerm"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Grant App Usage Permission"
-        android:backgroundTint="#333333"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="8dp" />
+        <!-- Brand header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="@dimen/space_xl">
 
-    <Button
-        android:id="@+id/btnBatteryPerm"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Disable Battery Restrictions"
-        android:backgroundTint="#333333"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="24dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SafeTrack"
+                android:textColor="@color/brand_primary"
+                android:textSize="@dimen/text_display"
+                android:textStyle="bold"
+                android:letterSpacing="0.02" />
 
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Setup Pending"
-        android:textColor="#B0BEC5"
-        android:textSize="16sp"
-        android:layout_marginBottom="24dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device monitoring console"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_subtitle"
+                android:layout_marginTop="@dimen/space_xs" />
 
-    <Button
-        android:id="@+id/btnHideApp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Hide Application"
-        android:backgroundTint="#FF5252"
-        android:textColor="#FFFFFF" />
+       </LinearLayout>
 
-    <Button
-        android:id="@+id/btnActivateAdmin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Activate Admin"
-        android:backgroundTint="#333333"
-        android:textColor="#FFFFFF" />
+        <!-- Status card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_lg"
+            app:cardBackgroundColor="@color/bg_card"
+            app:cardCornerRadius="@dimen/radius_lg"
+            app:cardElevation="2dp">
 
-    <Button
-        android:id="@+id/btnOpenDashboard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Open Dashboard"
-        android:backgroundTint="#00E676"
-        android:textColor="#000000"
-        android:visibility="gone" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_lg">
 
-    <Button
-        android:id="@+id/btnForceTrack"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Force Track Now (Test)"
-        android:backgroundTint="#FFA726"
-        android:textColor="#000000"
-        android:layout_marginTop="8dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="STATUS"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="@dimen/text_caption"
+                    android:letterSpacing="0.15"
+                    android:textStyle="bold" />
 
-</LinearLayout>
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Setup Pending"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title"
+                    android:textStyle="bold"
+                    android:layout_marginTop="@dimen/space_sm" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/divider"
+                    android:layout_marginVertical="@dimen/space_md" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Grant the permissions below to activate background tracking."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_body"
+                    android:lineSpacingExtra="2dp" />
+
+           </LinearLayout>
+       </androidx.cardview.widget.CardView>
+
+        <!-- Permission section header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PERMISSIONS"
+            android:textColor="@color/text_tertiary"
+            android:textSize="@dimen/text_caption"
+            android:letterSpacing="0.15"
+            android:textStyle="bold"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLocationPerm"
+            style="@style/Widget.SafeTrack.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📍  Location Access"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnUsagePerm"
+            style="@style/Widget.SafeTrack.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📊  App Usage Access"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBatteryPerm"
+            style="@style/Widget.SafeTrack.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔋  Disable Battery Restrictions"
+            android:layout_marginBottom="@dimen/space_lg" />
+
+        <!-- Quick actions -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="QUICK ACTIONS"
+            android:textColor="@color/text_tertiary"
+            android:textSize="@dimen/text_caption"
+            android:letterSpacing="0.15"
+            android:textStyle="bold"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnForceTrack"
+            style="@style/Widget.SafeTrack.Button.Warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚡  Force Track Now"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenDashboard"
+            style="@style/Widget.SafeTrack.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📈  Open Dashboard"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnActivateAdmin"
+            style="@style/Widget.SafeTrack.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛡  Activate Device Admin"
+            android:layout_marginBottom="@dimen/space_sm" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHideApp"
+            style="@style/Widget.SafeTrack.Button.Danger"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🚫  Hide Application Icon" />
+
+   </LinearLayout>
+</ScrollView>

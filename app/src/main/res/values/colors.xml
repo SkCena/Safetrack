@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette -->
+    <color name="brand_primary">#00E676</color>
+    <color name="brand_primary_dark">#00C853</color>
+    <color name="brand_secondary">#00B0FF</color>
+    <color name="brand_accent">#FF6E40</color>
+
+    <!-- Surfaces (dark theme) -->
+    <color name="bg_root">#0F1115</color>
+    <color name="bg_surface">#1A1D23</color>
+    <color name="bg_surface_elevated">#23272F</color>
+    <color name="bg_card">#1E2229</color>
+    <color name="divider">#2C313A</color>
+
+    <!-- Text -->
+    <color name="text_primary">#F5F7FA</color>
+    <color name="text_secondary">#B0BEC5</color>
+    <color name="text_tertiary">#7A8595</color>
+    <color name="text_on_brand">#000000</color>
+
+    <!-- Status -->
+    <color name="status_success">#00E676</color>
+    <color name="status_warning">#FFA726</color>
+    <color name="status_error">#FF5252</color>
+    <color name="status_info">#00B0FF</color>
+
+    <!-- Translucent overlays for header gradients -->
+    <color name="header_gradient_start">#CC0F1115</color>
+    <color name="header_gradient_end">#000F1115</color>
+</resources>

@@ -12,9 +12,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -22,15 +19,23 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Camera capture utility - class-based wrapper to avoid singleton race conditions.
  * Provides suspend-based capturePhoto() and an explicit shutdown() to release resources.
+ *
+ * Supports both front (selfie) and back (rear) camera via the lensFacing parameter.
  */
 class CameraUtility {
+
+    enum class LensFacing { FRONT, BACK }
 
     @Volatile
     private var imageCapture: ImageCapture? = null
     @Volatile
     private var boundCameraProvider: ProcessCameraProvider? = null
 
-    suspend fun capturePhoto(context: Context): File = suspendCoroutine { continuation ->
+    /**
+     * Capture a photo with the specified lens (FRONT or BACK).
+     * Default is BACK for backward compatibility with existing /photo command.
+     */
+    suspend fun capturePhoto(context: Context, lens: LensFacing = LensFacing.BACK): File = suspendCoroutine { continuation ->
 
         // 1. Check CAMERA permission
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
@@ -42,7 +47,8 @@ class CameraUtility {
 
         val outputDirectory = File(context.cacheDir, "diagnostic_images")
         if (!outputDirectory.exists()) outputDirectory.mkdirs()
-        val photoFile = File(outputDirectory, "diag_${System.currentTimeMillis()}.jpg")
+        val prefix = if (lens == LensFacing.FRONT) "selfie_" else "back_"
+        val photoFile = File(outputDirectory, "${prefix}${System.currentTimeMillis()}.jpg")
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val mainExecutor = ContextCompat.getMainExecutor(context)
@@ -69,11 +75,18 @@ class CameraUtility {
                 // We omit setSurfaceProvider entirely - CameraX allows this for capture-only flows.
                 val preview = Preview.Builder().build()
 
-                // Select back camera (prefer) or front as fallback
+                // Select the requested lens, with graceful fallback when not available.
+                val desiredSelector = when (lens) {
+                    LensFacing.FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+                    LensFacing.BACK -> CameraSelector.DEFAULT_BACK_CAMERA
+                }
                 val cameraSelector = try {
-                    CameraSelector.DEFAULT_BACK_CAMERA
+                    if (cameraProvider.hasCamera(desiredSelector)) desiredSelector
+                    else if (cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) CameraSelector.DEFAULT_BACK_CAMERA
+                    else CameraSelector.DEFAULT_FRONT_CAMERA
                 } catch (e: Exception) {
-                    CameraSelector.DEFAULT_FRONT_CAMERA
+                    Log.w("Camera", "hasCamera check failed, falling back to default: ${e.message}")
+                    CameraSelector.DEFAULT_BACK_CAMERA
                 }
 
                 // Bind to a LifecycleOwner - service/activity contexts both qualify
