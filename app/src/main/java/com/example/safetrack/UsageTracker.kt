@@ -28,32 +28,41 @@ object UsageTracker {
     }
 
     suspend fun saveUsageStatsToDb(context: Context) {
-        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val currentTime = System.currentTimeMillis()
-        val startTime = currentTime - 24 * 60 * 60 * 1000 // 24 hours ago
+        if (!hasUsageStatsPermission(context)) {
+            Log.e("UsageTracker", "Permission denied: Cannot access usage stats")
+            return
+        }
 
-        val stats = usageStatsManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            startTime,
-            currentTime
-        )
+        try {
+            val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val currentTime = System.currentTimeMillis()
+            val startTime = currentTime - 24 * 60 * 60 * 1000 // 24 hours ago
 
-        val dao = AppDatabase.getDatabase(context).trackingDao()
+            val stats = usageStatsManager.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY,
+                startTime,
+                currentTime
+            )
 
-        if (stats != null) {
-            for (usageStats in stats) {
-                if (usageStats.totalTimeInForeground > 0) {
-                    val trackingData = TrackingData(
-                        timestamp = System.currentTimeMillis(),
-                        packageName = usageStats.packageName,
-                        foregroundTimeMs = usageStats.totalTimeInForeground,
-                        lastTimeUsed = usageStats.lastTimeUsed,
-                        category = "GENERAL",
-                        usageType = "APP"
-                    )
-                    dao.insertLog(trackingData)
+            val dao = AppDatabase.getDatabase(context).trackingDao()
+
+            if (stats != null) {
+                for (usageStats in stats) {
+                    if (usageStats.totalTimeInForeground > 0) {
+                        val trackingData = TrackingData(
+                            timestamp = System.currentTimeMillis(),
+                            packageName = usageStats.packageName,
+                            foregroundTimeMs = usageStats.totalTimeInForeground,
+                            lastTimeUsed = usageStats.lastTimeUsed,
+                            category = "GENERAL",
+                            usageType = "APP"
+                        )
+                        dao.insertLog(trackingData)
+                    }
                 }
             }
+        } catch (e: Exception) {
+            Log.e("UsageTracker", "Error saving usage stats to DB: ${e.message}", e)
         }
     }
 
