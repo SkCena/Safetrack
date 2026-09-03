@@ -27,6 +27,36 @@ object UsageTracker {
         context.startActivity(intent)
     }
 
+    suspend fun saveUsageStatsToDb(context: Context) {
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val currentTime = System.currentTimeMillis()
+        val startTime = currentTime - 24 * 60 * 60 * 1000 // 24 hours ago
+
+        val stats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            startTime,
+            currentTime
+        )
+
+        val dao = AppDatabase.getDatabase(context).trackingDao()
+
+        if (stats != null) {
+            for (usageStats in stats) {
+                if (usageStats.totalTimeInForeground > 0) {
+                    val trackingData = TrackingData(
+                        timestamp = System.currentTimeMillis(),
+                        packageName = usageStats.packageName,
+                        foregroundTimeMs = usageStats.totalTimeInForeground,
+                        lastTimeUsed = usageStats.lastTimeUsed,
+                        category = "GENERAL",
+                        usageType = "APP"
+                    )
+                    dao.insertLog(trackingData)
+                }
+            }
+        }
+    }
+
     fun getUsageStatsJSON(context: Context): String {
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val currentTime = System.currentTimeMillis()

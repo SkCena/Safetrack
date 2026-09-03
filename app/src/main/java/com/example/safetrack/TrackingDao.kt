@@ -14,4 +14,7 @@ interface TrackingDao {
 
     @Query("UPDATE tracking_logs SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markAsSynced(ids: List<Int>)
+
+    @Query("SELECT * FROM tracking_logs WHERE usageType = :type ORDER BY timestamp DESC")
+    suspend fun getLogsByType(type: String): List<TrackingData>
 }

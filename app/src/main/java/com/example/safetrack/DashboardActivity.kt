@@ -104,8 +104,16 @@ class DashboardActivity : AppCompatActivity() {
             val log = logs[position]
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             holder.tvTimestamp.text = sdf.format(Date(log.timestamp))
-            holder.tvLocation.text = "Lat: ${log.latitude}, Lng: ${log.longitude}"
-            holder.tvUsage.text = "Usage: ${log.packageName}"
+
+            if (log.latitude != null && log.longitude != null) {
+                holder.tvLocation.text = "📍 Lat: ${log.latitude}, Lng: ${log.longitude}"
+                holder.tvLocation.visibility = View.VISIBLE
+            } else {
+                holder.tvLocation.visibility = View.GONE
+            }
+
+            val durationMin = log.foregroundTimeMs / 60000
+            holder.tvUsage.text = "📱 App: ${log.packageName} | Duration: ${durationMin}m"
         }
 
         override fun getItemCount() = logs.size
